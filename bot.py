@@ -7,9 +7,6 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 # Rasm katalogi
 IMAGE_DIR = "images"
 
-# Ruxsat berilgan chat ID lar
-ALLOWED_CHAT_IDS = [-4549455914]  # O'zingizning guruh ID larini bu yerga yozing
-
 # Kalit so‘zlar (kodlar) va fayllarni yuklash
 with open("image_keywords.json", "r") as f:
     KEYWORDS = json.load(f)
@@ -17,11 +14,6 @@ with open("image_keywords.json", "r") as f:
 # Foydalanuvchi xabarini qayta ishlash
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = update.message.text.upper().strip()
-
-    # Faqat ruxsat etilgan chatlardan kelgan xabarlar
-    if update.effective_chat.id not in ALLOWED_CHAT_IDS:
-        return
-
     matched = False
 
     for code, filename in KEYWORDS.items():
@@ -35,7 +27,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
                     matched = True
 
-    # Agar hech narsa topilmasa, hech nima demaydi
+    # Hech biri mos kelmasa - jim turadi
     if not matched:
         return
 
