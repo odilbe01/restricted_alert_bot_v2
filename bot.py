@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 # Ruxsat berilgan guruhlar ro‘yxati
-ALLOWED_CHAT_IDS = [-1001234567890, -1009876543210]  # <-- bu yerga ruxsatli chat ID larni yozing
+ALLOWED_CHAT_IDS = [-4549455914, -1001234567890, -1009876543210]  # <-- bu yerga ruxsatli chat ID larni yozing
 
 # Rasm katalogi
 IMAGE_DIR = "images"
