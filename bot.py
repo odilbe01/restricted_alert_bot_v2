@@ -4,6 +4,9 @@ import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
+# Ruxsat berilgan guruhlar ro‘yxati
+ALLOWED_CHAT_IDS = [-1001234567890, -1009876543210]  # <-- bu yerga ruxsatli chat ID larni yozing
+
 # Rasm katalogi
 IMAGE_DIR = "images"
 
@@ -13,6 +16,13 @@ with open("image_keywords.json", "r") as f:
 
 # Foydalanuvchi xabarini qayta ishlash
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    print(f"Chat ID: {chat_id}")
+
+    # Faqat ruxsat berilgan chatlar ishlata oladi
+    if chat_id not in ALLOWED_CHAT_IDS:
+        return
+
     message_text = update.message.text.upper().strip()
     matched = False
 
@@ -22,7 +32,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if os.path.exists(image_path):
                 with open(image_path, "rb") as img:
                     await update.message.reply_photo(photo=img)
-                matched = True
+                    matched = True
 
     # Hech biri mos kelmasa – javob yozmaydi
     if not matched:
@@ -36,5 +46,6 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    print("🚛 Bot started.")
+    print("🤖 Bot started.")
     app.run_polling()
+
