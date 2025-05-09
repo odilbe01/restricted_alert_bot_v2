@@ -7,6 +7,9 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 # Rasm katalogi
 IMAGE_DIR = "images"
 
+# Ruxsat berilgan chat ID lar
+ALLOWED_CHAT_IDS = [-4549455914]  # O'zingizning guruh ID larini bu yerga yozing
+
 # Kalit so‘zlar (kodlar) va fayllarni yuklash
 with open("image_keywords.json", "r") as f:
     KEYWORDS = json.load(f)
@@ -14,6 +17,11 @@ with open("image_keywords.json", "r") as f:
 # Foydalanuvchi xabarini qayta ishlash
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = update.message.text.upper().strip()
+
+    # Faqat ruxsat etilgan chatlardan kelgan xabarlar
+    if update.effective_chat.id not in ALLOWED_CHAT_IDS:
+        return
+
     matched = False
 
     for code, filename in KEYWORDS.items():
@@ -21,10 +29,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             image_path = os.path.join(IMAGE_DIR, filename)
             if os.path.exists(image_path):
                 with open(image_path, "rb") as img:
-                    await update.message.reply_photo(photo=img)
-                matched = True
+                    await update.message.reply_photo(
+                        photo=img,
+                        caption="🚫 Please take a look at the restriction photo. There might be a restricted road or a no-parking zone in the area. Please review it carefully to avoid any issues.\n\nSafe trips!"
+                    )
+                    matched = True
 
-    # Hech biri mos kelmasa – javob yozmaydi
+    # Agar hech narsa topilmasa, hech nima demaydi
     if not matched:
         return
 
@@ -36,6 +47,6 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+
     print("🚛 Bot started.")
     app.run_polling()
-
