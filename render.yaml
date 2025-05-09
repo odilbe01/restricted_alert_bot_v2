@@ -1,0 +1,9 @@
+services:
+  - type: worker
+    name: restricted-bot
+    runtime: python
+    buildCommand: ""
+    startCommand: "python bot.py"
+    envVars:
+      - key: BOT_TOKEN
+        value: YOUR_BOT_TOKEN_HERE
