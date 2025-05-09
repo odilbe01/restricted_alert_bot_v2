@@ -19,7 +19,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_photo(photo=img)
                 return
 
-    await update.message.reply_text("🚫 No matching facility code found in your message.")
 
 if __name__ == '__main__':
     import logging
