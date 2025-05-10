@@ -18,14 +18,12 @@ TIMEZONE_MAP = {
 }
 
 RESTRICTION_CODES = {
-    "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",  # Example file_id
+    "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",
     "TUS2": "AgACAgUAAxkBAAIBXGYcxbbb",
     "CLT6": "AgACAgUAAxkBAAIBY2Ycyzxc"
-    # Add your real file_ids here
 }
 
 # --- STORAGE ---
-pending_notifications = {}  # msg_id: {"file_id": ..., "pu_time": ..., "chat_id": ...}
 scheduler = BackgroundScheduler()
 scheduler.start()
 
@@ -61,50 +59,48 @@ def parse_time_offset(text):
     return timedelta(hours=h, minutes=m)
 
 # --- HANDLERS ---
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    caption = update.message.caption or update.message.text or ""
-    pu_time = parse_pu_time(caption)
-    if pu_time:
-        pending_notifications[update.message.message_id] = {
-            "file_id": update.message.photo[-1].file_id,
-            "pu_time": pu_time,
-            "chat_id": update.message.chat_id
-        }
-        await update.message.reply_text("✅ PU vaqti saqlandi. Endi vaqt yozing (masalan: 6h30m)")
+async def handle_text_or_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (update.message.caption or update.message.text or "").upper()
 
-async def handle_time_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.upper()
-
-    # Restriction code bo‘lsa
+    # Restriction check
     for code in RESTRICTION_CODES:
         if code in text:
             await context.bot.send_photo(
                 chat_id=update.message.chat_id,
                 photo=RESTRICTION_CODES[code],
                 caption=(
-                    f"🚫 *Restriction Alert: {code}*\n"
-                    "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
-                    "Safe trips!"
+                    f"🚫 *Restriction Alert: {code}*
+Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\nSafe trips!"
                 ),
                 parse_mode='Markdown'
             )
             return
 
-    # PU notification bo‘lsa
-    if not pending_notifications:
-        return
-    try:
-        last_msg_id = max(pending_notifications.keys())
-        info = pending_notifications[last_msg_id]
-        file_id = info["file_id"]
-        pu_time = info["pu_time"]
-        chat_id = info["chat_id"]
+    # PU Notification check
+    pu_time = parse_pu_time(text)
+    if pu_time:
         offset = parse_time_offset(text)
-        notify_time = pu_time - offset - timedelta(minutes=10)
+        if offset.total_seconds() > 0:
+            notify_time = pu_time - offset - timedelta(minutes=10)
+            if update.message.photo:
+                file_id = update.message.photo[-1].file_id
+            else:
+                await update.message.reply_text("❌ Rasm topilmadi")
+                return
 
-        def job():
-            context.bot.send_photo(chat_id=chat_id, photo=file_id,
-                                   caption="Reminder: Load approaching pickup time. Please be prepared.")
+            def job():
+                context.bot.send_photo(chat_id=update.message.chat_id, photo=file_id,
+                                       caption="Reminder: Load approaching pickup time. Please be prepared.")
 
-        scheduler.add_job(job, trigger='date', run_date=notify
+            scheduler.add_job(job, trigger='date', run_date=notify_time)
+            await update.message.reply_text(f"⏰ Reminder scheduled at {notify_time.strftime('%Y-%m-%d %H:%M %Z')}")
+        else:
+            await update.message.reply_text("❌ Soat formati topilmadi. Masalan: 6h yoki 2h30m yozing.")
 
+# --- MAIN ---
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+app.add_handler(MessageHandler(filters.ALL, handle_text_or_photo))
+
+if __name__ == '__main__':
+    print("Bot ishga tushdi...")
+    app.run_polling()
