@@ -18,22 +18,19 @@ TIMEZONE_MAP = {
 }
 
 RESTRICTION_CODES = {
-    "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",  # <-- bu yerga haqiqiy file_id qo‘shing
+    "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",
     "TUS2": "AgACAgUAAxkBAAIBXGYcxbbb",
     "CLT6": "AgACAgUAAxkBAAIBY2Ycyzxc"
-    # Yana rasmlarni shu yerga qo‘shing kerak bo‘lsa
+    # Boshqa kodlar qo‘shing kerak bo‘lsa
 }
 
-# --- STORAGE ---
 scheduler = BackgroundScheduler()
 scheduler.start()
-
-# --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 
-# --- UTILITY FUNCTIONS ---
+# --- PU Time Parse ---
 def parse_pu_time(text):
-    match = re.search(r'PU:\s*(.+\d{2}:\d{2})\s+([A-Z]+)', text)
+    match = re.search(r'PU:\s*(.+?\d{2}:\d{2})\s+([A-Z]+)', text)
     if not match:
         return None
     datetime_str, tz_abbr = match.groups()
@@ -46,9 +43,10 @@ def parse_pu_time(text):
         tz = pytz.timezone(tz_name)
         return tz.localize(dt)
     except Exception as e:
-        print("Failed to parse PU time:", e)
+        logging.error(f"Failed to parse PU time: {e}")
         return None
 
+# --- Offset Parse ---
 def parse_time_offset(text):
     h = m = 0
     h_match = re.search(r"(\d+)h", text)
@@ -59,12 +57,13 @@ def parse_time_offset(text):
         m = int(m_match.group(1))
     return timedelta(hours=h, minutes=m)
 
-# --- HANDLER ---
+# --- Message Handler ---
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (update.message.caption or update.message.text or "").upper()
     chat_id = update.message.chat_id
+    logging.info(f"Received message: {text}")
 
-    # 🔍 1. Restriction code tekshirish
+    # --- Restriction Check ---
     for code in RESTRICTION_CODES:
         if code in text:
             await context.bot.send_photo(
@@ -77,10 +76,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ),
                 parse_mode='Markdown'
             )
-            print(f"[LOG] Restriction sent for {code} to {chat_id}")
+            logging.info(f"[Restriction] Sent for {code} to {chat_id}")
             return
 
-    # 🔍 2. PU notification aniqlash
+    # --- PU Notification Check ---
     pu_time = parse_pu_time(text)
     if pu_time:
         offset = parse_time_offset(text)
@@ -93,24 +92,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             def job():
-                context.bot.send_photo(
-                    chat_id=chat_id,
-                    photo=file_id,
-                    caption="Reminder: Load approaching pickup time. Please be prepared."
-                )
+                try:
+                    context.bot.send_photo(
+                        chat_id=chat_id,
+                        photo=file_id,
+                        caption="Reminder: Load approaching pickup time. Please be prepared."
+                    )
+                    logging.info(f"[Reminder] Sent photo to {chat_id}")
+                except Exception as e:
+                    logging.error(f"[Reminder] Error sending photo: {e}")
 
             scheduler.add_job(job, trigger='date', run_date=notify_time)
             await update.message.reply_text(f"⏰ Reminder scheduled at {notify_time.strftime('%Y-%m-%d %H:%M %Z')}")
-            print(f"[LOG] Reminder set for {notify_time} to {chat_id}")
+            logging.info(f"[Reminder] Scheduled for {notify_time} to {chat_id}")
         else:
             await update.message.reply_text("❌ '6h', '2h30m' kabi offset aniqlanmadi")
+            logging.warning(f"[Reminder] Offset topilmadi in text: {text}")
 
-# --- MAIN ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.ALL, handle_message))
 
 if __name__ == '__main__':
     print("🚛 Bot ishga tushdi")
     app.run_polling()
-
-
