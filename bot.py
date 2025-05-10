@@ -1,117 +1,61 @@
 import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
-import pytz
-import re
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+import os
 
 # --- CONFIG ---
-BOT_TOKEN = "8160467333:AAHpITVdypiM7Qa70jbtQfRE9bwdraB4trQ"
-TIMEZONE_MAP = {
-    'PDT': 'America/Los_Angeles',
-    'PST': 'America/Los_Angeles',
-    'EDT': 'America/New_York',
-    'EST': 'America/New_York',
-    'CDT': 'America/Chicago',
-    'CST': 'America/Chicago',
-}
+BOT_TOKEN = "YOUR_BOT_TOKEN"  # <-- bu yerga haqiqiy tokeningizni yozing
 
 RESTRICTION_CODES = {
-    "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",
-    "TUS2": "AgACAgUAAxkBAAIBXGYcxbbb",
-    "CLT6": "AgACAgUAAxkBAAIBY2Ycyzxc"
-    # Boshqa kodlar qo‘shing kerak bo‘lsa
+    "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
+    "HEA2": "HEA2.jpg", "HMK3": "HMK3.jpg", "DWA5": "DWA5.jpg", "LGA5": "LGA5.jpg", "RFD2": "RFD2.jpg",
+    "MEM5": "MEM5.jpg", "RBD5": "RBD5.jpg", "YHM1": "YHM1.jpg", "MKY1": "MKY1.jpg", "CHO1": "CHO1.jpg",
+    "DTW3": "DTW3.jpg", "HRD2": "HRD2.jpg", "IND9": "IND9.jpg", "MCI5": "MCI5.jpg", "DTW9": "DTW9.jpg",
+    "CDW5": "CDW5.jpg", "OXR1": "OXR1.jpg", "OWD9": "OWD9.jpg", "BNA7": "BNA7.jpg", "DET6": "DET6.jpg",
+    "JAN1": "JAN1.jpg", "MSP8": "MSP8.jpg", "IND5": "IND5.jpg", "LBE1": "LBE1.jpg", "RDU1": "RDU1.jpg",
+    "MCI9": "MCI9.jpg", "TYS1": "TYS1.jpg", "BOS4": "BOS4.jpg", "PPO4": "PPO4.jpg", "CLT9": "CLT9.jpg",
+    "RNO4": "RNO4.jpg", "DSM4": "DSM4.jpg", "RDU2": "RDU2.jpg", "HNE1": "HNE1.jpg", "BNA5": "BNA5.jpg",
+    "DXC3": "DXC3.jpg", "FTW6": "FTW6.jpg", "CMH1": "CMH1.jpg", "LDJ5": "LDJ5.jpg", "DTW1": "DTW1.jpg",
+    "FTW2": "FTW2.jpg", "SYR1": "SYR1.jpg", "LIT1": "LIT1.jpg", "LAN2": "LAN2.jpg", "MGEY": "MGEY.jpg",
+    "DTW5": "DTW5.jpg", "MTN6": "MTN6.jpg", "JFK8": "JFK8.jpg", "RIC4": "RIC4.jpg", "CLT6": "CLT6.jpg",
+    "VGA1": "VGA1.jpg", "ACY2": "ACY2.jpg", "MTN1": "MTN1.jpg", "MOB5": "MOB5.jpg", "MCO2": "MCO2.jpg",
+    "ABE3": "ABE3.jpg", "ORF2": "ORF2.jpg", "FTW1": "FTW1.jpg", "EWR4": "EWR4.jpg", "ILG1": "ILG1.jpg",
+    "CLE2": "CLE2.jpg", "XLA4": "XLA4.jpg", "SGA1": "SGA1.jpg", "DEN4": "DEN4.jpg", "SBD6": "SBD6.jpg",
+    "LGA9": "LGA9.jpg", "DNJ2": "DNJ2.jpg", "BOS3": "BOS3.jpg", "MDT5": "MDT5.jpg", "VCB3": "VCB3.jpg",
+    "ORF3": "ORF3.jpg", "HOU1": "HOU1.jpg", "ABE8": "ABE8.jpg", "PNE5": "PNE5.jpg", "SWF2": "SWF2.jpg",
+    "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "DIN4": "DIN4.jpg", "MTN2": "MTN2.jpg"
 }
 
-scheduler = BackgroundScheduler()
-scheduler.start()
+# --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 
-# --- PU Time Parse ---
-def parse_pu_time(text):
-    match = re.search(r'PU:\s*(.+?\d{2}:\d{2})\s+([A-Z]+)', text)
-    if not match:
-        return None
-    datetime_str, tz_abbr = match.groups()
-    try:
-        full_datetime_str = f"{datetime.now().year} {datetime_str}"
-        dt = datetime.strptime(full_datetime_str, "%Y %a %b %d %H:%M")
-        tz_name = TIMEZONE_MAP.get(tz_abbr)
-        if not tz_name:
-            return None
-        tz = pytz.timezone(tz_name)
-        return tz.localize(dt)
-    except Exception as e:
-        logging.error(f"Failed to parse PU time: {e}")
-        return None
+# --- HANDLER ---
+async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message_text = (update.message.caption or update.message.text or "").upper()
+    logging.info(f"Received: {message_text}")
 
-# --- Offset Parse ---
-def parse_time_offset(text):
-    h = m = 0
-    h_match = re.search(r"(\d+)h", text)
-    m_match = re.search(r"(\d+)m", text)
-    if h_match:
-        h = int(h_match.group(1))
-    if m_match:
-        m = int(m_match.group(1))
-    return timedelta(hours=h, minutes=m)
-
-# --- Message Handler ---
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (update.message.caption or update.message.text or "").upper()
-    chat_id = update.message.chat_id
-    logging.info(f"Received message: {text}")
-
-    # --- Restriction Check ---
-    for code in RESTRICTION_CODES:
-        if code in text:
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=RESTRICTION_CODES[code],
-                caption=(
-                    f"🚫 *Restriction Alert: {code}*\n"
-                    "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
-                    "Safe trips!"
-                ),
-                parse_mode='Markdown'
-            )
-            logging.info(f"[Restriction] Sent for {code} to {chat_id}")
-            return
-
-    # --- PU Notification Check ---
-    pu_time = parse_pu_time(text)
-    if pu_time:
-        offset = parse_time_offset(text)
-        if offset.total_seconds() > 0:
-            notify_time = pu_time - offset - timedelta(minutes=10)
-            if update.message.photo:
-                file_id = update.message.photo[-1].file_id
+    for code, filename in RESTRICTION_CODES.items():
+        if code in message_text:
+            photo_path = os.path.join("images", filename)
+            if os.path.exists(photo_path):
+                await update.message.reply_photo(
+                    photo=open(photo_path, "rb"),
+                    caption=(
+                        f"🚫 *Restriction Alert: {code}*\n"
+                        "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
+                        "Safe trips!"
+                    ),
+                    parse_mode='Markdown'
+                )
+                logging.info(f"Sent restriction for {code}")
             else:
-                await update.message.reply_text("❌ Rasm topilmadi. PU notification uchun rasm ham kerak.")
-                return
+                await update.message.reply_text(f"❌ Image for {code} not found.")
+            break  # Stop after first match
 
-            def job():
-                try:
-                    context.bot.send_photo(
-                        chat_id=chat_id,
-                        photo=file_id,
-                        caption="Reminder: Load approaching pickup time. Please be prepared."
-                    )
-                    logging.info(f"[Reminder] Sent photo to {chat_id}")
-                except Exception as e:
-                    logging.error(f"[Reminder] Error sending photo: {e}")
-
-            scheduler.add_job(job, trigger='date', run_date=notify_time)
-            await update.message.reply_text(f"⏰ Reminder scheduled at {notify_time.strftime('%Y-%m-%d %H:%M %Z')}")
-            logging.info(f"[Reminder] Scheduled for {notify_time} to {chat_id}")
-        else:
-            await update.message.reply_text("❌ '6h', '2h30m' kabi offset aniqlanmadi")
-            logging.warning(f"[Reminder] Offset topilmadi in text: {text}")
-
+# --- BOT START ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
-app.add_handler(MessageHandler(filters.ALL, handle_message))
+app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
 
 if __name__ == '__main__':
-    print("🚛 Bot ishga tushdi")
+    print("📡 Restriction Bot is running...")
     app.run_polling()
