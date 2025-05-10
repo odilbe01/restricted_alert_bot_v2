@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 import os
 
 # --- CONFIG ---
-BOT_TOKEN = "YOUR_BOT_TOKEN"  # <-- bu yerga haqiqiy tokeningizni yozing
+BOT_TOKEN = "8160467333:AAHpITVdypiM7Qa70jbtQfRE9bwdraB4trQ"
 
 RESTRICTION_CODES = {
     "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
@@ -53,7 +53,7 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
             break  # Stop after first match
 
 # --- BOT START ---
-app = ApplicationBuilder().token(BOT_TOKEN).build()
+app = ApplicationBuilder().token(8160467333:AAHpITVdypiM7Qa70jbtQfRE9bwdraB4trQ).build()
 app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
 
 if __name__ == '__main__':
