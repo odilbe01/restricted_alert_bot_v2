@@ -21,6 +21,7 @@ RESTRICTION_CODES = {
     "EWR8": "AgACAgUAAxkBAAIBW2YcxaF",
     "TUS2": "AgACAgUAAxkBAAIBXGYcxbbb",
     "CLT6": "AgACAgUAAxkBAAIBY2Ycyzxc"
+    # Real file_id'larni shu yerga yozasiz
 }
 
 # --- STORAGE ---
@@ -58,7 +59,7 @@ def parse_time_offset(text):
         m = int(m_match.group(1))
     return timedelta(hours=h, minutes=m)
 
-# --- HANDLERS ---
+# --- HANDLER ---
 async def handle_text_or_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (update.message.caption or update.message.text or "").upper()
 
@@ -69,14 +70,15 @@ async def handle_text_or_photo(update: Update, context: ContextTypes.DEFAULT_TYP
                 chat_id=update.message.chat_id,
                 photo=RESTRICTION_CODES[code],
                 caption=(
-                    f"🚫 *Restriction Alert: {code}*
-Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\nSafe trips!"
+                    f"🚫 *Restriction Alert: {code}*\n"
+                    "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
+                    "Safe trips!"
                 ),
                 parse_mode='Markdown'
             )
             return
 
-    # PU Notification check
+    # PU notification check
     pu_time = parse_pu_time(text)
     if pu_time:
         offset = parse_time_offset(text)
@@ -89,8 +91,11 @@ Please check the restriction photo carefully. There might be no truck road or a 
                 return
 
             def job():
-                context.bot.send_photo(chat_id=update.message.chat_id, photo=file_id,
-                                       caption="Reminder: Load approaching pickup time. Please be prepared.")
+                context.bot.send_photo(
+                    chat_id=update.message.chat_id,
+                    photo=file_id,
+                    caption="Reminder: Load approaching pickup time. Please be prepared."
+                )
 
             scheduler.add_job(job, trigger='date', run_date=notify_time)
             await update.message.reply_text(f"⏰ Reminder scheduled at {notify_time.strftime('%Y-%m-%d %H:%M %Z')}")
@@ -102,5 +107,6 @@ app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.ALL, handle_text_or_photo))
 
 if __name__ == '__main__':
-    print("Bot ishga tushdi...")
+    print("🚛 Bot started.")
     app.run_polling()
+
