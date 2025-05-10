@@ -50,10 +50,10 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 logging.info(f"Sent restriction for {code}")
             else:
                 await update.message.reply_text(f"❌ Image for {code} not found.")
-            break  # Stop after first match
+            break
 
 # --- BOT START ---
-app = ApplicationBuilder().token(8160467333:AAHpITVdypiM7Qa70jbtQfRE9bwdraB4trQ).build()
+app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
 
 if __name__ == '__main__':
