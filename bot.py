@@ -34,8 +34,11 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
     message_text = (update.message.caption or update.message.text or "").upper()
     logging.info(f"Received: {message_text}")
 
+    matched = False
+
     for code, filename in RESTRICTION_CODES.items():
         if code in message_text:
+            matched = True
             photo_path = os.path.join("images", filename)
             if os.path.exists(photo_path):
                 await update.message.reply_photo(
@@ -50,7 +53,10 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 logging.info(f"Sent restriction for {code}")
             else:
                 await update.message.reply_text(f"❌ Image for {code} not found.")
-            break
+                logging.warning(f"Image file not found: {filename}")
+
+    if not matched:
+        logging.info("No matching code found in message.")
 
 # --- BOT START ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
