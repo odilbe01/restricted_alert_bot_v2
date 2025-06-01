@@ -23,7 +23,8 @@ RESTRICTION_CODES = {
     "CLE2": "CLE2.jpg", "XLA4": "XLA4.jpg", "SGA1": "SGA1.jpg", "DEN4": "DEN4.jpg", "SBD6": "SBD6.jpg",
     "LGA9": "LGA9.jpg", "DNJ2": "DNJ2.jpg", "BOS3": "BOS3.jpg", "MDT5": "MDT5.jpg", "VCB3": "VCB3.jpg",
     "ORF3": "ORF3.jpg", "HOU1": "HOU1.jpg", "ABE8": "ABE8.jpg", "PNE5": "PNE5.jpg", "SWF2": "SWF2.jpg",
-    "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "DIN4": "DIN4.jpg", "MTN2": "MTN2.jpg", "TYS5": "TYS5.jpg"
+    "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "MEM4": "MEM4.jpg", "LUK2": "LUK2.jpg", "DIN4": "DIN4.jpg", 
+    "MTN2": "MTN2.jpg", "TYS5": "TYS5.jpg"
 }
 
 # --- LOGGING ---
