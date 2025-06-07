@@ -33,24 +33,24 @@ logger = logging.getLogger()
 
 # --- UNIVERSAL HANDLER ---
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_text = (update.message.caption or update.message.text or "").upper()
-    logger.info(f"Received: {message_text}")
+    text = (update.message.caption or update.message.text or "").upper()
+    logger.info(f"Received: {text}")
 
-    # 🔁 1. NEW LOAD ALERT
-    if "NEW LOAD ALERT" in message_text:
+    # 1. NEW LOAD ALERT
+    if "NEW LOAD ALERT" in text:
         await update.message.reply_text(
             "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
         )
-        logger.info("🔁 Replied to 'New Load Alert'")
+        logger.info("✅ Replied to 'New Load Alert'")
 
-    # 📸 2. RESTRICTION CODES
+    # 2. RESTRICTION
     matched = False
     for code, filename in RESTRICTION_CODES.items():
-        if code in message_text:
+        if code in text:
             matched = True
-            photo_path = os.path.join("images", filename)
-            if os.path.exists(photo_path):
-                with open(photo_path, "rb") as photo:
+            path = os.path.join("images", filename)
+            if os.path.exists(path):
+                with open(path, "rb") as photo:
                     await update.message.reply_photo(
                         photo=photo,
                         caption=(
@@ -58,14 +58,14 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
                             "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
                             "Safe trips!"
                         ),
-                        parse_mode='Markdown'
+                        parse_mode="Markdown"
                     )
                     logger.info(f"✅ Sent restriction for {code}")
             else:
                 await update.message.reply_text(f"❌ Image for {code} not found.")
                 logger.warning(f"Image file not found: {filename}")
-    if not matched:
-        logger.info("No matching restriction code found in message.")
+    if not matched and "NEW LOAD ALERT" not in text:
+        logger.info("ℹ️ No restriction code or load alert found.")
 
 # --- BOT START ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
