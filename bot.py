@@ -30,7 +30,7 @@ RESTRICTION_CODES = {
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 
-# --- HANDLER ---
+# --- RESTRICTION HANDLER ---
 async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = (update.message.caption or update.message.text or "").upper()
     logging.info(f"Received: {message_text}")
@@ -51,17 +51,26 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     ),
                     parse_mode='Markdown'
                 )
-                logging.info(f"Sent restriction for {code}")
+                logging.info(f"✅ Sent restriction for {code}")
             else:
                 await update.message.reply_text(f"❌ Image for {code} not found.")
                 logging.warning(f"Image file not found: {filename}")
-
     if not matched:
-        logging.info("No matching code found in message.")
+        logging.info("No matching restriction code found in message.")
+
+# --- NEW LOAD ALERT HANDLER ---
+async def handle_new_load_alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message_text = (update.message.text or "").upper()
+    if "NEW LOAD ALERT" in message_text:
+        await update.message.reply_text(
+            "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
+        )
+        logging.info("🔁 Replied to 'New Load Alert'")
 
 # --- BOT START ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_new_load_alert))
 
 if __name__ == '__main__':
     print("📡 Restriction Bot is running...")
