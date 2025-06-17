@@ -9,7 +9,7 @@ BOT_TOKEN = "8160467333:AAEWHmnTzXpx-rNtS8jl0CQlHA-a9lBdz_0"
 RESTRICTION_CODES = {
     "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
     "HEA2": "HEA2.jpg", "HMK3": "HMK3.jpg", "DWA5": "DWA5.jpg", "LGA5": "LGA5.jpg", "RFD2": "RFD2.jpg",
-    "MEM5": "MEM5.jpg", "RBD5": "RBD5.jpg", "YHM1": "YHM1.jpg", "MKY1": "MKY1.jpg", "CHO1": "CHO1.jpg",
+    "MEM5": "MEM5.jpg", "PHL5": "PHL5.jpg", "YHM1": "YHM1.jpg", "MKY1": "MKY1.jpg", "CHO1": "CHO1.jpg",
     "DTW3": "DTW3.jpg", "HRD2": "HRD2.jpg", "IND9": "IND9.jpg", "MCI5": "MCI5.jpg", "DTW9": "DTW9.jpg",
     "CDW5": "CDW5.jpg", "OXR1": "OXR1.jpg", "OWD9": "OWD9.jpg", "BNA7": "BNA7.jpg", "DET6": "DET6.jpg",
     "JAN1": "JAN1.jpg", "MSP8": "MSP8.jpg", "IND5": "IND5.jpg", "LBE1": "LBE1.jpg", "RDU1": "RDU1.jpg",
@@ -25,7 +25,7 @@ RESTRICTION_CODES = {
     "ORF3": "ORF3.jpg", "HOU1": "HOU1.jpg", "ABE8": "ABE8.jpg", "PNE5": "PNE5.jpg", "SWF2": "SWF2.jpg",
     "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "MEM4": "MEM4.jpg", "LUK2": "LUK2.jpg", "DIN4": "DIN4.jpg", 
     "MTN2": "MTN2.jpg", "TYS5": "TYS5.jpg", "MCO5": "MCO5.jpg", "AFW5": "AFW5.jpg", "AUS2": "AUS2.jpg",
-    "MQY1": "MQY1.jpg", "PHL5": "PHL5.jpg",
+    "MQY1": "MQY1.jpg", "RBD5": "RBD5.jpg", 
 }
 
 # --- LOGGING ---
