@@ -32,10 +32,6 @@ RESTRICTION_CODES = {
     "MQY1": "MQY1.jpg", "RBD5": "RBD5.jpg", 
 }
 
-# --- LOGGING ---
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
-
 # --- UNIVERSAL HANDLER ---
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
@@ -46,8 +42,7 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
     text = (update.message.caption or update.message.text or "").upper()
     logger.info(f"Received: {text}")
 
-    # 1. NEW LOAD ALERT
-if "NEW LOAD ALERT" in text:
+    if "NEW LOAD ALERT" in text:
         await update.message.reply_text(
             "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
         )
