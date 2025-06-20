@@ -43,6 +43,9 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
    if update.message.from_user.is_bot:
        return
 
+    text = (update.message.caption or update.message.text or "").upper()
+    logger.info(f"Received: {text}")
+
     # 1. NEW LOAD ALERT
     if "NEW LOAD ALERT" in text:
         await update.message.reply_text(
