@@ -47,7 +47,7 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
     logger.info(f"Received: {text}")
 
     # 1. NEW LOAD ALERT
-    if "NEW LOAD ALERT" in text:
+if "NEW LOAD ALERT" in text:
         await update.message.reply_text(
             "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
         )
