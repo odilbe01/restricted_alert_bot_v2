@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 # --- LOAD .ENV ---
-load_dotenv()  # ⬅️ BUNI ISHLATING!
+load_dotenv()  #
 
 # --- CONFIG ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
