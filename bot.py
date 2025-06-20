@@ -38,16 +38,16 @@ logger = logging.getLogger()
 
 # --- UNIVERSAL HANDLER ---
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-   if not update.message:
-       return
-   if update.message.from_user.is_bot:
-       return
+    if not update.message:
+        return
+    if update.message.from_user.is_bot:
+        return
 
     text = (update.message.caption or update.message.text or "").upper()
     logger.info(f"Received: {text}")
 
     # 1. NEW LOAD ALERT
-if "NEW LOAD ALERT" in text:
+    if "NEW LOAD ALERT" in text:
         await update.message.reply_text(
             "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
         )
