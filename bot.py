@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 import os
 
 # --- CONFIG ---
-BOT_TOKEN = "8160467333:AAEWHmnTzXpx-rNtS8jl0CQlHA-a9lBdz_0"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 RESTRICTION_CODES = {
     "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
