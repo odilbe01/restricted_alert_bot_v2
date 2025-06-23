@@ -1,14 +1,10 @@
 import logging
-import os
-from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-
-# --- LOAD .ENV ---
-load_dotenv()  
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+import os
 
 # --- CONFIG ---
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "8160467333:AAEWHmnTzXpx-rNtS8jl0CQlHA-a9lBdz_0"
 
 RESTRICTION_CODES = {
     "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
@@ -30,52 +26,45 @@ RESTRICTION_CODES = {
     "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "MEM4": "MEM4.jpg", "LUK2": "LUK2.jpg", "DIN4": "DIN4.jpg", 
     "MTN2": "MTN2.jpg", "TYS5": "TYS5.jpg", "MCO5": "MCO5.jpg", "AFW5": "AFW5.jpg", "AUS2": "AUS2.jpg",
     "MQY1": "MQY1.jpg", "RBD5": "RBD5.jpg", 
+
 }
 
-# --- UNIVERSAL HANDLER ---
-async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message:
-        return
-    if update.message.from_user.is_bot:
-        return
+# --- LOGGING ---
+logging.basicConfig(level=logging.INFO)
 
-    text = (update.message.caption or update.message.text or "").upper()
-    logger.info(f"Received: {text}")
+# --- HANDLER ---
+async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message_text = (update.message.caption or update.message.text or "").upper()
+    logging.info(f"Received: {message_text}")
 
-    if "NEW LOAD ALERT" in text:
-        await update.message.reply_text(
-            "Please check all post trucks, the driver was covered! It takes just few seconds, let's do!"
-        )
-        logger.info("✅ Replied to 'New Load Alert'")
-
-    # 2. RESTRICTION
     matched = False
+
     for code, filename in RESTRICTION_CODES.items():
-        if code in text:
+        if code in message_text:
             matched = True
-            path = os.path.join("images", filename)
-            if os.path.exists(path):
-                with open(path, "rb") as photo:
-                    await update.message.reply_photo(
-                        photo=photo,
-                        caption=(
-                            f"🚫 *Restriction Alert: {code}*\n"
-                            "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
-                            "Safe trips!"
-                        ),
-                        parse_mode="Markdown"
-                    )
-                    logger.info(f"✅ Sent restriction for {code}")
+            photo_path = os.path.join("images", filename)
+            if os.path.exists(photo_path):
+                await update.message.reply_photo(
+                    photo=open(photo_path, "rb"),
+                    caption=(
+                        f"🚫 *Restriction Alert: {code}*\n"
+                        "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
+                        "Safe trips!"
+                    ),
+                    parse_mode='Markdown'
+                )
+                logging.info(f"Sent restriction for {code}")
             else:
                 await update.message.reply_text(f"❌ Image for {code} not found.")
-                logger.warning(f"Image file not found: {filename}")
-    if not matched and "NEW LOAD ALERT" not in text:
-        logger.info("ℹ️ No restriction code or load alert found.")
+                logging.warning(f"Image file not found: {filename}")
+
+    if not matched:
+        logging.info("No matching code found in message.")
 
 # --- BOT START ---
 app = ApplicationBuilder().token(BOT_TOKEN).build()
-app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_all_messages))
+app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
 
-if __name__ == '__main__':
-    print("📡 Bot is running...")
+if name == 'main':
+    print("📡 Restriction Bot is running...")
     app.run_polling()
