@@ -65,6 +65,8 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
 
-if name == 'main':
+if __name__ == '__main__':
+    app.run_polling()
+
     print("📡 Restriction Bot is running...")
     app.run_polling()
