@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 import os
 
 # --- CONFIG ---
-BOT_TOKEN = os.getenv("BOT_TOKEN").strip()
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 RESTRICTION_CODES = {
     "EWR8": "EWR8.jpg", "HLA2": "HLA2.jpg", "OWD5": "OWD5.jpg", "CLT2": "CLT2.jpg", "GRR1": "GRR1.jpg",
@@ -23,50 +23,70 @@ RESTRICTION_CODES = {
     "CLE2": "CLE2.jpg", "XLA4": "XLA4.jpg", "SGA1": "SGA1.jpg", "DEN4": "DEN4.jpg", "SBD6": "SBD6.jpg",
     "LGA9": "LGA9.jpg", "DNJ2": "DNJ2.jpg", "BOS3": "BOS3.jpg", "MDT5": "MDT5.jpg", "VCB3": "VCB3.jpg",
     "ORF3": "ORF3.jpg", "HOU1": "HOU1.jpg", "ABE8": "ABE8.jpg", "PNE5": "PNE5.jpg", "SWF2": "SWF2.jpg",
-    "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "MEM4": "MEM4.jpg", "LUK2": "LUK2.jpg", "DIN4": "DIN4.jpg", 
+    "MKE2": "MKE2.jpg", "RFD4": "RFD4.jpg", "MEM4": "MEM4.jpg", "LUK2": "LUK2.jpg", "DIN4": "DIN4.jpg",
     "MTN2": "MTN2.jpg", "TYS5": "TYS5.jpg", "MCO5": "MCO5.jpg", "AFW5": "AFW5.jpg", "AUS2": "AUS2.jpg",
     "MQY1": "MQY1.jpg", "RBD5": "RBD5.jpg", "JAX3": "JAX3.jpg",
-
 }
+
+# --- TEXTS ---
+SAFETY_TEXT = (
+    "Dear Drivers,\n\n"
+    "When arriving at the facility, please comply with all yard rules:\n\n"
+    "- Speed: Max 5 mph inside the yard; take all turns slowly.\n"
+    "- Maneuvers: No sharp turns or other risky actions.\n"
+    "- Distractions: No phone use; no headphones while driving.\n\n"
+    "Please remember the rest of the posted yard rules as well. "
+    "These reminders are part of our job—and they keep everyone safe."
+)
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 
 # --- HANDLER ---
 async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_text = (update.message.caption or update.message.text or "").upper()
-    logging.info(f"Received: {message_text}")
+    msg = update.effective_message
+    raw_text = (msg.caption or msg.text or "")
+    text_upper = raw_text.upper()
+    logging.info(f"Received: {raw_text}")
 
+    # 1) "🗺𝗧𝗿𝗶𝗽" trigger kelganda SAFETY_TEXT ni reply qiladi
+    if "🗺" in raw_text and ("TRIP" in text_upper or "𝗧𝗥𝗜𝗣" in raw_text):
+        await msg.reply_text(SAFETY_TEXT, disable_web_page_preview=True)
+
+    # 2) Restriction kodlarini tekshirish
     matched = False
-
     for code, filename in RESTRICTION_CODES.items():
-        if code in message_text:
+        if code in text_upper:
             matched = True
             photo_path = os.path.join("images", filename)
             if os.path.exists(photo_path):
-                await update.message.reply_photo(
-                    photo=open(photo_path, "rb"),
-                    caption=(
-                        f"🚫 *Restriction Alert: {code}*\n"
-                        "Please check the restriction photo carefully. There might be no truck road or a no-parking zone.\n\n"
-                        "Safe trips!"
-                    ),
-                    parse_mode='Markdown'
-                )
+                with open(photo_path, "rb") as f:
+                    await msg.reply_photo(
+                        photo=f,
+                        caption=(
+                            f"🚫 *Restriction Alert: {code}*\n"
+                            "Please check the restriction photo carefully. "
+                            "There might be no truck road or a no-parking zone.\n\n"
+                            "Safe trips!"
+                        ),
+                        parse_mode="Markdown",
+                    )
                 logging.info(f"Sent restriction for {code}")
             else:
-                await update.message.reply_text(f"❌ Image for {code} not found.")
+                await msg.reply_text(f"❌ Image for {code} not found.")
                 logging.warning(f"Image file not found: {filename}")
 
     if not matched:
         logging.info("No matching code found in message.")
 
 # --- BOT START ---
-app = ApplicationBuilder().token(BOT_TOKEN).build()
-app.add_handler(MessageHandler(filters.TEXT | filters.CAPTION, handle_restriction))
-
-if __name__ == '__main__':
-    app.run_polling()
-
+def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    # Captionli rasm/video/doc va oddiy matnni ushlash uchun:
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_restriction))
     print("📡 Restriction Bot is running...")
     app.run_polling()
+
+if __name__ == "__main__":
+    main()
+
