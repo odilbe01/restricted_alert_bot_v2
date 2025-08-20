@@ -41,7 +41,7 @@ SAFETY_TEXT = (
 )
 
 # AYNAN shu ko‘rinishni ushlaydi (satr boshida yoki xabar ichida):
-TRIP_ID_TRIGGER = re.compile(r'(?:^|\n)\s*𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:\s*')
+TRIP_ID_TRIGGER = re.compile(r'(?:^|\n)\s*🗺𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:\s*')
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
