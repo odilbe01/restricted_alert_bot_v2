@@ -40,8 +40,8 @@ SAFETY_TEXT = (
     "These reminders are part of our job—and they keep everyone safe."
 )
 
-# AYNAN shu ko‘rinishni ushlaydi (satr boshida yoki xabar ichida):
-TRIP_ID_TRIGGER = re.compile(r'(?:^|\n)\s*🗺𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:\s*')
+# 🗺 + 𝗧𝗿𝗶𝗽 + 𝗜𝗗 (ixtiyoriy bo'shliqlar, ixtiyoriy ":")
+TRIP_PIN_TRIGGER = re.compile(r'(?:^|\n)\s*🗺\s*𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:?\s*', re.UNICODE)
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
@@ -52,17 +52,17 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
     msg = update.effective_message
     raw_text = (msg.caption or msg.text or "")
 
-    # Botlarning xabariga javob bermaslik (loopning oldini oladi)
+    # Botlarning xabarlariga javob bermaslik
     if msg.from_user and msg.from_user.is_bot:
         return
 
     logging.info(f"Received: {raw_text}")
 
-    # 1) Exact "𝗧𝗿𝗶𝗽 𝗜𝗗 :" trigger
-    if TRIP_ID_TRIGGER.search(raw_text):
+    # 1) "🗺𝗧𝗿𝗶𝗽 𝗜𝗗" trigger bo'lsa — safety reply
+    if TRIP_PIN_TRIGGER.search(raw_text):
         await msg.reply_text(SAFETY_TEXT, disable_web_page_preview=True)
 
-    # 2) Restriction kodlarini tekshirish
+    # 2) Restriction kodlari bo'yicha rasm yuborish
     text_upper = raw_text.upper()
     matched = False
     for code, filename in RESTRICTION_CODES.items():
@@ -94,11 +94,10 @@ def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable is empty.")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-    # Matn, rasm/video/document caption’lari — hammasini tutish uchun:
+    # Matn va captionlarni ushlash uchun:
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_restriction))
     print("📡 Restriction Bot is running...")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
-
