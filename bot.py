@@ -44,7 +44,11 @@ SAFETY_TEXT = (
 TRIP_PIN_TRIGGER = re.compile(r'(?:^|\n)\s*🗺\s*𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:?\s*', re.UNICODE)
 
 # --- NEW: trigger for updater message ---
-SEND_IT_TRIGGER = re.compile(r'@David_updaterbot\s+send it', re.IGNORECASE)
+# OLD:
+# SEND_IT_TRIGGER = re.compile(r'@David_updaterbot\s+send it', re.IGNORECASE)
+
+# NEW:
+SEND_IT_TRIGGER = re.compile(r'\bSend it david\b', re.IGNORECASE)
 
 # --- NEW: texts for updater flow ---
 UPD_TEXT_1 = (
