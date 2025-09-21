@@ -1,7 +1,7 @@
 import os
 import re
 import logging
-from telegram import Update
+from telegram import Update, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 # --- CONFIG ---
@@ -109,32 +109,36 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     logging.info(f"Received: {raw_text}")
 
-    # --- "Send it david" flow (reply QILMAYDI, faqat 3-xabar 2-xabarga reply) ---
+    # --- "Send it david" flow ---
     if SEND_IT_TRIGGER.search(raw_text):
         chat_id = msg.chat_id
 
-        # 1,2,4,5 — oddiy xabarlar (reply emas)
+        # 1,2,4 — oddiy xabarlar; 3 — 2-xabarga reply
         await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_1)
         m2 = await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_2)
         await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_3_REPLY,
                                        reply_to_message_id=m2.message_id)
         await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_4)
-        await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_5)
 
-        # rasmlar — ham reply emas, oddiy yuboriladi
+        # Oxirgi bosqich: UPD_TEXT_5 + 2 ta rasmni bitta post ko'rinishida
         try:
-            if os.path.exists(IMG1_PATH):
-                with open(IMG1_PATH, "rb") as f1:
-                    await context.bot.send_photo(chat_id=chat_id, photo=f1)
+            if os.path.exists(IMG1_PATH) and os.path.exists(IMG2_PATH):
+                media = [
+                    InputMediaPhoto(media=open(IMG1_PATH, "rb"), caption=UPD_TEXT_5),
+                    InputMediaPhoto(media=open(IMG2_PATH, "rb")),
+                ]
+                await context.bot.send_media_group(chat_id=chat_id, media=media)
             else:
-                logging.warning(f"Image not found: {IMG1_PATH}")
-            if os.path.exists(IMG2_PATH):
-                with open(IMG2_PATH, "rb") as f2:
-                    await context.bot.send_photo(chat_id=chat_id, photo=f2)
-            else:
-                logging.warning(f"Image not found: {IMG2_PATH}")
+                # fallback: matn + mavjud rasmlarni alohida yuboramiz
+                await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_5)
+                if os.path.exists(IMG1_PATH):
+                    with open(IMG1_PATH, "rb") as f1:
+                        await context.bot.send_photo(chat_id=chat_id, photo=f1)
+                if os.path.exists(IMG2_PATH):
+                    with open(IMG2_PATH, "rb") as f2:
+                        await context.bot.send_photo(chat_id=chat_id, photo=f2)
         except Exception as e:
-            logging.warning(f"Sending images failed: {e}")
+            logging.warning(f"send_media_group failed: {e}")
         return  # boshqa logikalarga tushmasin
 
     # 1) Trip ID trigger — safety reply + PIN (reply qilib yuboradi)
