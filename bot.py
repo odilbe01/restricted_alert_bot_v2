@@ -43,6 +43,57 @@ SAFETY_TEXT = (
 # 🗺 + 𝗧𝗿𝗶𝗽 + 𝗜𝗗 (ixtiyoriy bo'shliqlar, ixtiyoriy ":")
 TRIP_PIN_TRIGGER = re.compile(r'(?:^|\n)\s*🗺\s*𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:?\s*', re.UNICODE)
 
+# --- NEW: trigger for updater message ---
+SEND_IT_TRIGGER = re.compile(r'@David_updaterbot\s+send it', re.IGNORECASE)
+
+# --- NEW: texts for updater flow ---
+UPD_TEXT_1 = (
+    "Dear Driver,\n\n"
+    "Please be informed that the Amazon Relay app navigation must be used at all times during each stop and throughout your trips. "
+    "You are required to check in and check out with the app, otherwise, it affects the company's performance. "
+    "Ensure you are punctual for pickups and deliveries and inform us in the the group if you encounter any issues. "
+    "Failure to do so may result in charges. Please read this message and confirm your receipt."
+)
+
+UPD_TEXT_2 = (
+    "Attention⚠️\n\n"
+    "For android\n"
+    "(https://play.google.com/store/apps/details?id=com.jeyluta.timestampcamerafree&hl=en_US&gl=US&pli=1)\n"
+    "For IOS (https://apps.apple.com/us/app/timestamp-camera-basic/id840110184)\n\n"
+    "Google Play (https://play.google.com/store/apps/details?id=com.jeyluta.timestampcamerafree&hl=en_US&gl=US&pli=1)\n"
+    "Timestamp Camera - Apps on Google Play\n"
+    "Add date and time watermark to photos and videos"
+)
+
+UPD_TEXT_3_REPLY = (
+    "Dear Driver,\n\n"
+    "Please use the Timestamps app when sending photos for update of pick-ups, drop trailers, traffic, etc. "
+    "This will help us provide evidence to Amazon.\n\n"
+    "Thank you for your help!"
+)
+
+UPD_TEXT_4 = (
+    "📌 Late PU: $500 \n"
+    "📌 Late DEL: $500\n"
+    "📌 No App Usage: $500\n"
+    "📌 No Update: $200\n"
+    "📌 No Trailer pictures, Seal and BOL: $300\n"
+    "📌 Rejection: $1000\n"
+    "📌 Restricted Road: $5000\n\n"
+    "‼️ Please check in at the gate 20-30 min earlier to prevent any unforeseen circumstances at the gate.\n\n"
+    "‼️  Always use amazon navigation on your relay acc"
+)
+
+UPD_TEXT_5 = (
+    "Dear drivers when you get check in /out at amazon guard shack please send pictures of the guard screen in this order "
+    "to avoid any kind of misunderstandings and problems with amazon check in/out timestamps. "
+    "We kindly ask you to respect and follow company rules."
+)
+
+# --- NEW: images for the last step (change paths if needed) ---
+IMG1_PATH = os.getenv("IMG1_PATH", "images/checkin_complete.jpg")
+IMG2_PATH = os.getenv("IMG2_PATH", "images/checkout_complete.jpg")
+
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 
@@ -57,6 +108,32 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     logging.info(f"Received: {raw_text}")
+
+    # --- NEW: @David_updaterbot send it flow ---
+    if SEND_IT_TRIGGER.search(raw_text):
+        m1 = await msg.reply_text(UPD_TEXT_1)
+        m2 = await msg.reply_text(UPD_TEXT_2)
+        await msg.reply_text(UPD_TEXT_3_REPLY, reply_to_message_id=m2.message_id)
+        await msg.reply_text(UPD_TEXT_4)
+        m5 = await msg.reply_text(UPD_TEXT_5)
+
+        # send two images (if present)
+        try:
+            if os.path.exists(IMG1_PATH):
+                with open(IMG1_PATH, "rb") as f1:
+                    await context.bot.send_photo(chat_id=msg.chat_id, photo=f1)
+            else:
+                logging.warning(f"Image not found: {IMG1_PATH}")
+            if os.path.exists(IMG2_PATH):
+                with open(IMG2_PATH, "rb") as f2:
+                    await context.bot.send_photo(chat_id=msg.chat_id, photo=f2)
+            else:
+                logging.warning(f"Image not found: {IMG2_PATH}")
+        except Exception as e:
+            logging.warning(f"Sending images failed: {e}")
+        # davom ettirish shart emas, lekin qolgan matchinglar ta’sir qilmasligi uchun return qilamiz
+        return
+    # --- NEW END ---
 
     # 1) "🗺𝗧𝗿𝗶𝗽 𝗜𝗗" trigger bo'lsa — safety reply + PIN
     if TRIP_PIN_TRIGGER.search(raw_text):
@@ -109,3 +186,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
