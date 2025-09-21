@@ -43,14 +43,10 @@ SAFETY_TEXT = (
 # 🗺 + 𝗧𝗿𝗶𝗽 + 𝗜𝗗 (ixtiyoriy bo'shliqlar, ixtiyoriy ":")
 TRIP_PIN_TRIGGER = re.compile(r'(?:^|\n)\s*🗺\s*𝗧𝗿𝗶𝗽\s*𝗜𝗗\s*:?\s*', re.UNICODE)
 
-# --- NEW: trigger for updater message ---
-# OLD:
-# SEND_IT_TRIGGER = re.compile(r'@David_updaterbot\s+send it', re.IGNORECASE)
-
-# NEW:
+# --- trigger for "Send it david" ---
 SEND_IT_TRIGGER = re.compile(r'\bSend it david\b', re.IGNORECASE)
 
-# --- NEW: texts for updater flow ---
+# --- texts for updater flow ---
 UPD_TEXT_1 = (
     "Dear Driver,\n\n"
     "Please be informed that the Amazon Relay app navigation must be used at all times during each stop and throughout your trips. "
@@ -94,7 +90,7 @@ UPD_TEXT_5 = (
     "We kindly ask you to respect and follow company rules."
 )
 
-# --- NEW: images for the last step (change paths if needed) ---
+# images for the last step
 IMG1_PATH = os.getenv("IMG1_PATH", "images/checkin_complete.jpg")
 IMG2_PATH = os.getenv("IMG2_PATH", "images/checkout_complete.jpg")
 
@@ -107,51 +103,49 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
     msg = update.effective_message
     raw_text = (msg.caption or msg.text or "")
 
-    # Botlarning xabarlariga javob bermaslik
+    # Bot xabariga javob bermaymiz
     if msg.from_user and msg.from_user.is_bot:
         return
 
     logging.info(f"Received: {raw_text}")
 
-    # --- NEW: @David_updaterbot send it flow ---
+    # --- "Send it david" flow (reply QILMAYDI, faqat 3-xabar 2-xabarga reply) ---
     if SEND_IT_TRIGGER.search(raw_text):
-        m1 = await msg.reply_text(UPD_TEXT_1)
-        m2 = await msg.reply_text(UPD_TEXT_2)
-        await msg.reply_text(UPD_TEXT_3_REPLY, reply_to_message_id=m2.message_id)
-        await msg.reply_text(UPD_TEXT_4)
-        m5 = await msg.reply_text(UPD_TEXT_5)
+        chat_id = msg.chat_id
 
-        # send two images (if present)
+        # 1,2,4,5 — oddiy xabarlar (reply emas)
+        await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_1)
+        m2 = await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_2)
+        await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_3_REPLY,
+                                       reply_to_message_id=m2.message_id)
+        await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_4)
+        await context.bot.send_message(chat_id=chat_id, text=UPD_TEXT_5)
+
+        # rasmlar — ham reply emas, oddiy yuboriladi
         try:
             if os.path.exists(IMG1_PATH):
                 with open(IMG1_PATH, "rb") as f1:
-                    await context.bot.send_photo(chat_id=msg.chat_id, photo=f1)
+                    await context.bot.send_photo(chat_id=chat_id, photo=f1)
             else:
                 logging.warning(f"Image not found: {IMG1_PATH}")
             if os.path.exists(IMG2_PATH):
                 with open(IMG2_PATH, "rb") as f2:
-                    await context.bot.send_photo(chat_id=msg.chat_id, photo=f2)
+                    await context.bot.send_photo(chat_id=chat_id, photo=f2)
             else:
                 logging.warning(f"Image not found: {IMG2_PATH}")
         except Exception as e:
             logging.warning(f"Sending images failed: {e}")
-        # davom ettirish shart emas, lekin qolgan matchinglar ta’sir qilmasligi uchun return qilamiz
-        return
-    # --- NEW END ---
+        return  # boshqa logikalarga tushmasin
 
-    # 1) "🗺𝗧𝗿𝗶𝗽 𝗜𝗗" trigger bo'lsa — safety reply + PIN
+    # 1) Trip ID trigger — safety reply + PIN (reply qilib yuboradi)
     if TRIP_PIN_TRIGGER.search(raw_text):
         await msg.reply_text(SAFETY_TEXT, disable_web_page_preview=True)
-
-        # --- ADDED: Xabarni pin qilish (admin ruxsat kerak) ---
         try:
-            # PTB v20: Message.pin() mavjud; bildirishnomasiz pinlaymiz
             await msg.pin(disable_notification=True)
         except Exception as e:
             logging.warning(f"Pin failed (probably missing permission): {e}")
-        # --- ADDED END ---
 
-    # 2) Restriction kodlari bo'yicha rasm yuborish
+    # 2) Restriction kodlari — rasmni reply qilib yuboradi
     text_upper = raw_text.upper()
     matched = False
     for code, filename in RESTRICTION_CODES.items():
@@ -190,4 +184,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
