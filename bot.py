@@ -58,9 +58,17 @@ async def handle_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     logging.info(f"Received: {raw_text}")
 
-    # 1) "🗺𝗧𝗿𝗶𝗽 𝗜𝗗" trigger bo'lsa — safety reply
+    # 1) "🗺𝗧𝗿𝗶𝗽 𝗜𝗗" trigger bo'lsa — safety reply + PIN
     if TRIP_PIN_TRIGGER.search(raw_text):
         await msg.reply_text(SAFETY_TEXT, disable_web_page_preview=True)
+
+        # --- ADDED: Xabarni pin qilish (admin ruxsat kerak) ---
+        try:
+            # PTB v20: Message.pin() mavjud; bildirishnomasiz pinlaymiz
+            await msg.pin(disable_notification=True)
+        except Exception as e:
+            logging.warning(f"Pin failed (probably missing permission): {e}")
+        # --- ADDED END ---
 
     # 2) Restriction kodlari bo'yicha rasm yuborish
     text_upper = raw_text.upper()
