@@ -89,7 +89,7 @@ UPD_TEXT_4 = (
 )
 
 UPD_TEXT_5 = (
-    "Dear drivers when you get check in /out at amazon guard shack please send pictures of the guard screen in this order "
+    "Dear drivers when you get check in / out at amazon guard shack please send pictures of the guard screen in this order "
     "to avoid any kind of misunderstandings and problems with amazon check in/out timestamps. "
     "We kindly ask you to respect and follow company rules."
 )
